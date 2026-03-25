@@ -1,0 +1,14 @@
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/bin/Release/net35/MoveIt-CSM--Sync.dll
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/bin/Release/net35/MoveIt-CSM--Sync.pdb
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.csproj.AssemblyReference.cache
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.GeneratedMSBuildEditorConfig.editorconfig
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.csproj.CoreCompileInputs.cache
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/obj/Release/net35/MoveIt-CSM--Sync.dll
+/var/home/king/CS1 Mods/MoveIt-CSM--Sync/src/CSM.MoveItSync/obj/Release/net35/MoveIt-CSM--Sync.pdb
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/bin/Release/net35/CSM.MoveItSync.dll
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/bin/Release/net35/CSM.MoveItSync.pdb
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.csproj.AssemblyReference.cache
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.GeneratedMSBuildEditorConfig.editorconfig
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.csproj.CoreCompileInputs.cache
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.dll
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.pdb

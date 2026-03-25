@@ -1,0 +1,5 @@
+is_global = true
+build_property.RootNamespace = CSM.MoveItSync
+build_property.ProjectDir = /var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 

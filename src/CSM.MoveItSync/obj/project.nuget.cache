@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "pgx6cvstbBH2A1VMRHt71IP1dR530+hD7MBzEgeXIFxvjR2sMySKU3xZeRtOuNeM6YIp3coQJerjo0CgRLxlkQ==",
+  "success": true,
+  "projectFilePath": "/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/CSM.MoveItSync.csproj",
+  "expectedPackageFiles": [
+    "/home/king/.nuget/packages/microsoft.netframework.referenceassemblies/1.0.3/microsoft.netframework.referenceassemblies.1.0.3.nupkg.sha512",
+    "/home/king/.nuget/packages/microsoft.netframework.referenceassemblies.net35/1.0.3/microsoft.netframework.referenceassemblies.net35.1.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}
