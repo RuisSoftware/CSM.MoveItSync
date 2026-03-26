@@ -12,3 +12,4 @@
 /var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.csproj.CoreCompileInputs.cache
 /var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.dll
 /var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.pdb
+/var/home/king/CS1 Mods/CSM.MoveItSync/src/CSM.MoveItSync/obj/Release/net35/CSM.MoveItSync.sourcelink.json

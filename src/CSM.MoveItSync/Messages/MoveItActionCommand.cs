@@ -30,6 +30,22 @@ namespace CSM.MoveItSync.Messages
         // Data for absolute state updates (Align, Line, etc.)
         [ProtoMember(8)]
         public List<ObjectStateData> States { get; set; }
+
+        // Data for Road Bending (Curvature)
+        [ProtoMember(9)]
+        public bool AutoCurve { get; set; }
+
+        [ProtoMember(10)]
+        public ushort CurveStartNode { get; set; }
+
+        [ProtoMember(11)]
+        public ushort CurveEndNode { get; set; }
+
+        [ProtoMember(12)]
+        public Vector3 CurveStartDir { get; set; }
+
+        [ProtoMember(13)]
+        public Vector3 CurveEndDir { get; set; }
     }
 
     public enum MoveItActionType
@@ -53,5 +69,11 @@ namespace CSM.MoveItSync.Messages
 
         [ProtoMember(4)]
         public float TerrainHeight { get; set; }
+
+        [ProtoMember(5)]
+        public Vector3 StartDirection { get; set; }
+
+        [ProtoMember(6)]
+        public Vector3 EndDirection { get; set; }
     }
 }

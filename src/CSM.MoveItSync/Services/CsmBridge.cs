@@ -22,6 +22,12 @@ namespace CSM.MoveItSync.Services
 
         internal static bool IsServerInstance() => Command.CurrentRole == MultiplayerRole.Server;
 
+        internal static bool IsIgnoring()
+        {
+            var helper = IgnoreHelper.Instance;
+            return helper != null && helper.IsIgnored();
+        }
+
         internal static IDisposable StartIgnore()
         {
             try
