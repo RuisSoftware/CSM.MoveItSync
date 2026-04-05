@@ -144,8 +144,8 @@ namespace CSM.MoveItSync.Handlers
                                     TreeManager.instance.UpdateTreeRenderer(t.id.Tree, true);
                                 }
                             }
-                        } catch (Exception itemEx) {
-                            Log.Info($"Error updating instance during preview: {itemEx.Message}");
+                        } catch (Exception) {
+                            // Silent during preview to avoid disk I/O lag
                         }
                     }
 
@@ -177,8 +177,8 @@ namespace CSM.MoveItSync.Handlers
                                             }
                                         }
                                     }
-                                } catch (Exception ex) {
-                                    Log.Info($"Error applying AutoCurve to guide node {nodeId}: {ex.Message}");
+                                } catch (Exception) {
+                                    // Silent during preview
                                 }
                             }
                         }

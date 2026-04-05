@@ -181,21 +181,29 @@ namespace CSM.MoveItSync.Patching
                     return;
                 }
 
-                // Throttling: only send every 40ms (~25 fps)
+                // Throttling: only send every 66ms (~15 fps) for better performance
                 long now = System.Diagnostics.Stopwatch.GetTimestamp();
                 long frequency = System.Diagnostics.Stopwatch.Frequency;
-                if ((now - _lastPreviewTime) * 1000 / frequency < 40) return;
+                if ((now - _lastPreviewTime) * 1000 / frequency < 66) return;
+                
+                // Motion Threshold: Avoid broadcasting if change is sub-visual
+                if (__instance.moveDelta.sqrMagnitude < 0.0025f && Mathf.Abs(__instance.angleDelta) < 0.0005f) return;
+
                 _lastPreviewTime = now;
 
                 // Start a new drag ID if needed
                 if (_currentDragID == 0) _currentDragID = now;
 
                 var ids = new List<long>();
+                int count = 0;
                 foreach (var state in __instance.m_states)
                 {
                     if (state.instance != null && state.instance.isValid)
                     {
                         ids.Add((long)state.instance.id.RawData);
+                        count++;
+                        // Cap live preview at 256 objects for performance
+                        if (count >= 256) break;
                     }
                 }
 

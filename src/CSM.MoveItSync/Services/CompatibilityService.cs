@@ -23,7 +23,7 @@ namespace CSM.MoveItSync.Services
                 }
 
                 string installedVersion = GetPluginVersion(csmPlugin);
-                if (string.IsNullOrEmpty(installedVersion) || !installedVersion.Contains(TargetCsmVersion))
+                if (string.IsNullOrEmpty(installedVersion) || (installedVersion != "0.0.0.0" && !installedVersion.Contains(TargetCsmVersion)))
                 {
                     ShowWarning($"Move It - CSM Sync was built for CSM version {TargetCsmVersion}.\n\nDetected version: {installedVersion ?? "unknown"}.\n\nSynchronization might be unstable or fail to work correctly.");
                 }
@@ -44,10 +44,12 @@ namespace CSM.MoveItSync.Services
         {
             if (plugin.userModInstance == null) return null;
 
-            // Try to find a 'version' property or field
+            // Try to find a 'version' property or field (case-insensitive check for common names)
             var type = plugin.userModInstance.GetType();
             var versionMember = type.GetProperty("version", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                             ?? (MemberInfo)type.GetField("version", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                             ?? type.GetProperty("Version", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                             ?? (MemberInfo)type.GetField("version", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
+                             ?? (MemberInfo)type.GetField("Version", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (versionMember != null)
             {
