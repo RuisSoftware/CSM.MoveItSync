@@ -63,10 +63,17 @@ namespace CSM.MoveItSync.Services
 
         private static void ShowWarning(string message)
         {
-            UIView.library.ShowModal<ExceptionPanel>("ExceptionPanel").SetMessage(
-                "Move It - CSM Sync Warning",
-                message,
-                false);
+            if (UIView.library != null)
+            {
+                UIView.library.ShowModal<ExceptionPanel>("ExceptionPanel").SetMessage(
+                    "Move It - CSM Sync Warning",
+                    message,
+                    false);
+            }
+            else
+            {
+                Debug.Log($"[MoveIt-CSM--Sync] Warning: {message}");
+            }
         }
     }
 }

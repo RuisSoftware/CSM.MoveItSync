@@ -78,12 +78,20 @@ namespace CSM.MoveItSync.Handlers
                     
                     if (!IsValidId(id)) continue;
 
-                    Instance instance = (Instance)id;
-                    if (instance != null && instance.isValid)
-                    {
-                        _instances.Add(instance);
-                        _initialStates.Add(instance.SaveToState(false));
-                        _capturedIds.Add(rawId);
+                    try {
+                        Instance instance = (Instance)id;
+                        if (instance != null && instance.isValid)
+                        {
+                            var state = instance.SaveToState(false);
+                            if (state != null)
+                            {
+                                _instances.Add(instance);
+                                _initialStates.Add(state);
+                                _capturedIds.Add(rawId);
+                            }
+                        }
+                    } catch (Exception ex) {
+                        Log.Warn($"PreviewSession: Failed to capture instance {rawId}: {ex.Message}");
                     }
                 }
             }
