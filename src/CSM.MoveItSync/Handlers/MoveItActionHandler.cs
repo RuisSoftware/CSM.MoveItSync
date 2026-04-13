@@ -6,6 +6,7 @@ using CSM.MoveItSync.Messages;
 using CSM.MoveItSync.Services;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using Log = CSM.MoveItSync.Services.Log;
 
@@ -29,6 +30,14 @@ namespace CSM.MoveItSync.Handlers
                 if (command.ActionType == MoveItActionType.Bulldoze)
                 {
                     HandleBulldoze(command);
+                }
+                else if (command.ActionType == MoveItActionType.Clone)
+                {
+                    HandleClone(command);
+                }
+                else if (command.ActionType == MoveItActionType.Mirror)
+                {
+                    HandleMirror(command);
                 }
                 else
                 {
@@ -369,6 +378,89 @@ namespace CSM.MoveItSync.Handlers
                     NetManager.instance.UpdateNodeRenderer(seg.m_endNode, true);
                 }
             }
+        }
+
+        private void HandleClone(MoveItActionCommand command)
+        {
+            if (command.InstanceIDs == null || command.States == null) return;
+
+            // Prepare IDs for ArrayHandler
+            var array16 = new List<ushort>();
+            var array32 = new List<uint>();
+
+            foreach (var state in command.States)
+            {
+                var idObj = state.InstanceID;
+                var type = (int)((idObj >> 24) & 0xFF);
+                var realId = (uint)(idObj & 0xFFFFFF);
+
+                if (type == 3) // Tree (InstanceType.Tree is 3 in game, 14 in Move It? No, let's check CSM)
+                    array32.Add(realId);
+                else
+                    array16.Add((ushort)realId);
+            }
+
+            Singleton<SimulationManager>.instance.AddAction(() =>
+            {
+                MoveItPreviewHandler.ClearSession();
+
+                using (CsmBridge.StartIgnore())
+                {
+                    // Force the randomizer-based ID allocation to use our synced IDs
+                    CSM.BaseGame.Injections.ArrayHandler.StartApplying(array16.ToArray(), array32.ToArray());
+                    
+                    try {
+                        var action = new CloneAction();
+                        
+                        // Set up the clone action state (original selection and move deltas)
+                        var oldSelection = new HashSet<Instance>();
+                        foreach (var rawId in command.InstanceIDs) {
+                            InstanceID id = default; id.RawData = rawId;
+                            if (IsValidId(id)) oldSelection.Add((Instance)id);
+                        }
+                        
+                        var oldSelectionField = typeof(CloneActionBase).GetField("m_oldSelection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        oldSelectionField?.SetValue(action, oldSelection);
+                        
+                        action.moveDelta = command.MoveDelta;
+                        action.angleDelta = command.AngleDelta;
+                        action.center = command.Center;
+                        action.followTerrain = command.FollowTerrain;
+
+                        // Execute the clone
+                        action.Do();
+                    }
+                    finally {
+                        CSM.BaseGame.Injections.ArrayHandler.StopApplying();
+                    }
+                }
+            });
+        }
+
+        private void HandleMirror(MoveItActionCommand command)
+        {
+            Singleton<SimulationManager>.instance.AddAction(() =>
+            {
+                MoveItPreviewHandler.ClearSession();
+
+                using (CsmBridge.StartIgnore())
+                {
+                    // AlignMirrorAction is internal, use reflection to instantiate
+                    Type mirrorActionType = typeof(MoveItTool).Assembly.GetType("MoveIt.AlignMirrorAction");
+                    if (mirrorActionType == null) return;
+
+                    var action = Activator.CreateInstance(mirrorActionType) as MoveIt.Action;
+                    if (action == null) return;
+                    
+                    var posField = mirrorActionType.GetField("mirrorPivot", BindingFlags.Public | BindingFlags.Instance);
+                    var dirField = mirrorActionType.GetField("mirrorAngle", BindingFlags.Public | BindingFlags.Instance);
+                    
+                    posField?.SetValue(action, command.MirrorPos);
+                    dirField?.SetValue(action, command.MirrorDir.x); // Angle was packed into .x
+
+                    action.Do();
+                }
+            });
         }
     }
 }

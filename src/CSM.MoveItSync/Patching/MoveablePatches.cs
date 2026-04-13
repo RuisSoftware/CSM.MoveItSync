@@ -175,4 +175,24 @@ namespace CSM.MoveItSync.Patching
             buildingInstance.subInstances = instances;
         }
     }
+
+    [HarmonyPatch(typeof(NetNode), "CalculateNode")]
+    public static class CalculateNodePatch
+    {
+        public static bool Prefix(ushort nodeID)
+        {
+            if (nodeID == 0 || nodeID >= 32768)
+            {
+                return false; // Skip invalid node IDs
+            }
+
+            // Check if node is essentially 'junk' (no flags) which can happen during desynced states
+            if (NetManager.instance.m_nodes.m_buffer[nodeID].m_flags == NetNode.Flags.None)
+            {
+                return false;
+            }
+
+            return true;
+        }
+    }
 }

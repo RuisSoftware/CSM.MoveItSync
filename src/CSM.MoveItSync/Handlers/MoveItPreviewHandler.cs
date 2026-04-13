@@ -6,6 +6,7 @@ using MoveIt;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using CSM.BaseGame.Injections.Tools;
 using Log = CSM.MoveItSync.Services.Log;
 
 namespace CSM.MoveItSync.Handlers
@@ -16,6 +17,20 @@ namespace CSM.MoveItSync.Handlers
 
         protected override void Handle(MoveItPreviewCommand command)
         {
+            // Sync cursor position
+            if (SimulationManager.instance != null && SimulationManager.instance.m_ThreadingWrapper != null)
+            {
+                SimulationManager.instance.m_ThreadingWrapper.QueueMainThread(() =>
+                {
+                    PlayerCursorManager cursorView =
+                        Singleton<ToolSimulatorCursorManager>.instance.GetCursorView(command.SenderId);
+                    if (cursorView)
+                    {
+                        cursorView.SetLabelContent(command.PlayerName, command.CursorWorldPosition);
+                    }
+                });
+            }
+
             Singleton<SimulationManager>.instance.AddAction(() =>
             {
                 try {
@@ -27,7 +42,7 @@ namespace CSM.MoveItSync.Handlers
                             Log.Info($"Starting new Live Preview session: {command.DragID}");
                         }
 
-                        _currentSession.Apply(command.MoveDelta, command.AngleDelta, command.Center, command.InstanceIDs, command.AutoCurve, command.CurveStartNode, command.CurveEndNode, command.CurveStartDir, command.CurveEndDir);
+                        _currentSession.Apply(command.MoveDelta, command.AngleDelta, command.Center, command.InstanceIDs, command.AutoCurve, command.CurveStartNode, command.CurveEndNode, command.CurveStartDir, command.CurveEndDir, command.IsBending);
                     }
                 } catch (Exception ex) {
                     Log.Error($"CRITICAL ERROR in MoveItPreviewHandler.Handle: {ex.Message}\n{ex.StackTrace}");
@@ -96,7 +111,7 @@ namespace CSM.MoveItSync.Handlers
                 }
             }
 
-            public void Apply(Vector3 moveDelta, float angleDelta, Vector3 center, List<long> currentIds, bool autoCurve, ushort curveStart, ushort curveEnd, Vector3 curveStartDir, Vector3 curveEndDir)
+            public void Apply(Vector3 moveDelta, float angleDelta, Vector3 center, List<long> currentIds, bool autoCurve, ushort curveStart, ushort curveEnd, Vector3 curveStartDir, Vector3 curveEndDir, bool isBending)
             {
                 if (NetManager.instance == null || BuildingManager.instance == null || PropManager.instance == null || TreeManager.instance == null)
                 {
@@ -144,6 +159,12 @@ namespace CSM.MoveItSync.Handlers
                                     NetManager.instance.UpdateNodeRenderer(n.id.NetNode, true);
                                 } else if (instance is MoveableSegment s) {
                                     NetManager.instance.UpdateSegmentRenderer(s.id.NetSegment, true);
+                                    if (isBending)
+                                    {
+                                        NetSegment seg = NetManager.instance.m_segments.m_buffer[s.id.NetSegment];
+                                        if (seg.m_startNode != 0) NetManager.instance.UpdateNodeRenderer(seg.m_startNode, true);
+                                        if (seg.m_endNode != 0) NetManager.instance.UpdateNodeRenderer(seg.m_endNode, true);
+                                    }
                                 } else if (instance is MoveableBuilding b) {
                                     BuildingManager.instance.UpdateBuildingRenderer(b.id.Building, true);
                                 } else if (instance is MoveableProp p) {

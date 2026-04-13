@@ -46,13 +46,21 @@ namespace CSM.MoveItSync.Messages
 
         [ProtoMember(13)]
         public Vector3 CurveEndDir { get; set; }
+
+        // Data for MirrorAction
+        [ProtoMember(14)]
+        public Vector3 MirrorPos { get; set; }
+        [ProtoMember(15)]
+        public Vector3 MirrorDir { get; set; }
     }
 
     public enum MoveItActionType
     {
         Transform,
         Bulldoze,
-        GenericStateUpdate
+        GenericStateUpdate,
+        Clone,
+        Mirror
     }
 
     [ProtoContract]

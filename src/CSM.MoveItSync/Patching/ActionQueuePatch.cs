@@ -57,6 +57,59 @@ namespace CSM.MoveItSync.Patching
                     }
                 }
             }
+            else if (action is CloneActionBase cloneAction)
+            {
+                var field = typeof(CloneActionBase).GetField("m_origToCloneUpdate", BindingFlags.NonPublic | BindingFlags.Instance);
+                var origToClone = field?.GetValue(cloneAction) as Dictionary<Instance, Instance>;
+                
+                if (origToClone != null)
+                {
+                    var ids = new List<uint>();
+                    var states = new List<ObjectStateData>();
+                    
+                    foreach (var pair in origToClone)
+                    {
+                        var orig = pair.Key;
+                        var clone = pair.Value;
+                        if (orig != null && clone != null && clone.isValid)
+                        {
+                            ids.Add(orig.id.RawData);
+                            states.Add(new ObjectStateData 
+                            { 
+                                InstanceID = clone.id.RawData,
+                                Position = clone.position,
+                                Angle = clone.angle
+                            });
+                        }
+                    }
+
+                    command = new MoveItActionCommand
+                    {
+                        ActionType = MoveItActionType.Clone,
+                        InstanceIDs = ids.ToArray(), // Original IDs
+                        States = states, // Cloned IDs and their final positions
+                        MoveDelta = cloneAction.moveDelta,
+                        AngleDelta = cloneAction.angleDelta,
+                        Center = cloneAction.center,
+                        FollowTerrain = cloneAction.followTerrain
+                    };
+                }
+            }
+            else if (action.GetType().Name == "AlignMirrorAction")
+            {
+                var posField = action.GetType().GetField("mirrorPivot", BindingFlags.Public | BindingFlags.Instance);
+                var dirField = action.GetType().GetField("mirrorAngle", BindingFlags.Public | BindingFlags.Instance);
+                
+                if (posField != null && dirField != null)
+                {
+                    command = new MoveItActionCommand
+                    {
+                        ActionType = MoveItActionType.Mirror,
+                        MirrorPos = (Vector3)posField.GetValue(action),
+                        MirrorDir = new Vector3((float)dirField.GetValue(action), 0, 0) // Pack angle into Vector3.x
+                    };
+                }
+            }
             else
             {
                 // For all other actions (Transform, Align, Line, etc.), send absolute final states
@@ -167,6 +220,8 @@ namespace CSM.MoveItSync.Patching
         private static long _lastPreviewTime = 0;
         private static long _currentDragID = 0;
         private static FieldInfo _draggingField = typeof(MoveItTool).GetField("dragging", BindingFlags.NonPublic | BindingFlags.Static);
+        private static FieldInfo _mouseRayField = typeof(ToolBase).GetField("m_mouseRay", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _mouseRayValidField = typeof(ToolBase).GetField("m_mouseRayValid", BindingFlags.NonPublic | BindingFlags.Instance);
 
         public static void Postfix(BaseTransformAction __instance)
         {
@@ -216,6 +271,20 @@ namespace CSM.MoveItSync.Patching
                 Vector3 curveStartDir = __instance.segmentCurve.m_startDirection;
                 Vector3 curveEndDir = __instance.segmentCurve.m_endDirection;
 
+                // Capture cursor position
+                Vector3 cursorAdjusted = __instance.center + __instance.moveDelta; // Default to center for drag
+                Ray mouseRay = (Ray)_mouseRayField.GetValue(MoveItTool.instance);
+                bool mouseRayValid = (bool)_mouseRayValidField.GetValue(MoveItTool.instance);
+                if (mouseRayValid)
+                {
+                    float dist;
+                    Plane plane = new Plane(Vector3.up, __instance.center + __instance.moveDelta);
+                    if (plane.Raycast(mouseRay, out dist))
+                    {
+                        cursorAdjusted = mouseRay.GetPoint(dist);
+                    }
+                }
+
                 CsmBridge.SendToAll(new MoveItPreviewCommand
                 {
                     DragID = _currentDragID,
@@ -227,12 +296,53 @@ namespace CSM.MoveItSync.Patching
                     CurveStartNode = curveStart,
                     CurveEndNode = curveEnd,
                     CurveStartDir = curveStartDir,
-                    CurveEndDir = curveEndDir
+                    CurveEndDir = curveEndDir,
+                    CursorWorldPosition = cursorAdjusted,
+                    IsBending = __instance.m_states.Any(s => s.instance is MoveableSegment)
                 });
             }
             catch (Exception ex) 
             {
                 Log.Error($"SENDER CRASH in TransformAction.Do Postfix: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(MoveItTool), "OnToolUpdate")]
+    public class MoveItToolUpdatePatch
+    {
+        private static long _lastUpdateTime = 0;
+        private static FieldInfo _mouseRayField = typeof(ToolBase).GetField("m_mouseRay", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _mouseRayValidField = typeof(ToolBase).GetField("m_mouseRayValid", BindingFlags.NonPublic | BindingFlags.Instance);
+        private static FieldInfo _draggingField = typeof(MoveItTool).GetField("dragging", BindingFlags.NonPublic | BindingFlags.Static);
+
+        public static void Postfix(MoveItTool __instance)
+        {
+            if (CsmBridge.IsIgnoring()) return;
+            
+            bool isDragging = (bool)_draggingField.GetValue(null);
+            if (isDragging) return; // Handled by TransformActionDoPatch
+
+            long now = System.Diagnostics.Stopwatch.GetTimestamp();
+            long frequency = System.Diagnostics.Stopwatch.Frequency;
+            if ((now - _lastUpdateTime) * 1000 / frequency < 100) return; // 10 fps for general cursor
+            _lastUpdateTime = now;
+
+            Ray mouseRay = (Ray)_mouseRayField.GetValue(__instance);
+            bool mouseRayValid = (bool)_mouseRayValidField.GetValue(__instance);
+            if (!mouseRayValid) return;
+
+            float dist;
+            Plane plane = new Plane(Vector3.up, __instance.m_hoverInstance?.position ?? Vector3.zero);
+            if (plane.Raycast(mouseRay, out dist))
+            {
+                Vector3 pos = mouseRay.GetPoint(dist);
+                CsmBridge.SendToAll(new MoveItToolCommand
+                {
+                    CursorWorldPosition = pos,
+                    IsActive = true,
+                    HoverID = __instance.m_hoverInstance?.id.NetNode ?? 0
+                });
             }
         }
     }
